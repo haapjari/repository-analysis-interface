@@ -42,43 +42,20 @@ def main():
         d = Dataset(c, args.first_creation_date, args.last_creation_date, args.language, args.min_stars, args.max_stars, args.order)
         d.collect()
     elif args.normalize:
-        log.debug("Normalizing dataset...")
-        # TODO
-        # Implement normalization logic
+        c = Config()
+        d = Dataset(c, args.first_creation_date, args.last_creation_date, args.language, args.min_stars, args.max_stars, args.order)
+        d.normalize()
     elif args.analyze:
-        log.debug(f"Performing {args.action} on {', '.join(args.variables)} using {args.correlation} correlation and saving to {args.output_path}")
+        c = Config()
+        d = Dataset(c, args.first_creation_date, args.last_creation_date, args.language, args.min_stars, args.max_stars, args.order)
+        d.analyze()
         # TODO
-        # Implement analysis logic based on the type of analysis
     else:
         parser.print_help()
 
 
 if __name__ == "__main__":
     main()
-
-    # --------------------------------------------------------- #
-    # 1. Read Dataset From CSV File
-    # --------------------------------------------------------- #
-
-    # open_issues = []
-    # closed_issues = []
-    # commits = []
-    # self_written_loc = []
-    # library_loc = []
-    # creation_date = []
-    # stargazers = []
-    # latest_release = []
-    # forks = []
-    # open_pulls = []
-    # closed_pulls = []
-    # releases = []
-    # network_events = []
-    # subscribers = []
-    # contributors = []
-    # watchers = []
-    #
-    # with open('data/data.csv', newline='') as csv_file:
-    #     reader = csv.DictReader(csv_file)
 
     #     for row in reader:
     #         open_issues.append(row.get('open_issues'))
