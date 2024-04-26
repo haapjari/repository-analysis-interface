@@ -1,5 +1,60 @@
+import argparse
+import logging as log
+from src.dataset.dataset import Dataset
+from src.config.config import Config
+
+
 def main():
-    print("Hello World")
+    log.basicConfig(level=log.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    parser = argparse.ArgumentParser(
+        description="Repository Analysis Interface\n\n"
+                    "Examples:\n"
+                    "  python -m src.main -c 2021-01-01 2021-01-08 Python 100 10000 desc\n"
+                    "  python -m src.main -n\n"
+                    "  python -m src.main -a dist 'stargazers, forks' spearman ./output.png\n",
+        formatter_class=argparse.RawTextHelpFormatter,
+        add_help=False)  # Disable automatic help to customize help option
+
+    parser.add_argument('-c', '--collect', action='store_true', help='Trigger dataset collection')
+    parser.add_argument('-n', '--normalize', action='store_true', help='Trigger dataset normalization')
+    parser.add_argument('-a', '--analyze', action='store_true', help='Trigger data analysis')
+
+    parser.add_argument('first_creation_date', type=str, help='First Creation Date (YYYY-MM-DD)', nargs='?', default='')
+    parser.add_argument('last_creation_date', type=str, help='Last Creation Date (YYYY-MM-DD)', nargs='?', default='')
+    parser.add_argument('language', type=str, help='Programming Language', nargs='?', default='')
+    parser.add_argument('min_stars', type=int, help='Minimum number of stars', nargs='?', default=0)
+    parser.add_argument('max_stars', type=int, help='Maximum number of stars', nargs='?', default=0)
+    parser.add_argument('order', type=str, help='Order: "asc" or "desc"', choices=['asc', 'desc'], nargs='?', default='asc')
+
+    parser.add_argument('action', type=str, help='Type of analysis to perform (dist, plot, heatmap)', nargs='?', choices=['dist', 'plot', 'heatmap'], default='dist')
+    parser.add_argument('variables', nargs='*', help='Variables to include in the analysis')
+    parser.add_argument('correlation', type=str, help='Type of correlation for plotting (spearman, kendall, pearson)', choices=['spearman', 'kendall', 'pearson'], nargs='?', default='pearson')
+    parser.add_argument('output_path', type=str, help='Path to save the analysis output picture', nargs='?', default='')
+
+    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
+                        help='Show this help message and exit. Example usage is listed above.')
+
+    args = parser.parse_args()
+
+    if args.collect:
+        c = Config()
+        d = Dataset(c, args.first_creation_date, args.last_creation_date, args.language, args.min_stars, args.max_stars, args.order)
+        d.collect()
+    elif args.normalize:
+        log.debug("Normalizing dataset...")
+        # TODO
+        # Implement normalization logic
+    elif args.analyze:
+        log.debug(f"Performing {args.action} on {', '.join(args.variables)} using {args.correlation} correlation and saving to {args.output_path}")
+        # TODO
+        # Implement analysis logic based on the type of analysis
+    else:
+        parser.print_help()
+
+
+if __name__ == "__main__":
+    main()
 
     # --------------------------------------------------------- #
     # 1. Read Dataset From CSV File
@@ -117,7 +172,7 @@ def main():
     # # Save the plot to the "out" folder
     # file_name = f"{datetime.now().isoformat()}_distributions.png"
     # plt.savefig(f"out/{file_name}")
-    
+
     # analysis.visualize_multiple_distributions(data)
     # analysis.visualize_distribution("watchers", watchers)
 
@@ -183,7 +238,3 @@ def main():
     # plt.close()
 
     # Close the Cursor and Connection
-
-
-if __name__ == "__main__":
-    main()

@@ -1,5 +1,5 @@
 run:
-	python3 src/main.py
+	python3 -m src.main src/main.py
 .PHONY: run
 
 update:

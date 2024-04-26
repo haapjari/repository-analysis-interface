@@ -2,15 +2,10 @@
 
 ## v1.0.0
 
-- Libraries:
-  - argparse
-  - pyinstaller 
-- Logger
-- Config
-- Interface
-  - Collect
-  - Normalize
-  - Display
-    - Distributions
-    - Relationships
-    - Heatmap
+- WIP: Collect
+- Store
+- Normalize
+- Analysis:
+  - Distributions
+  - Relationships
+  - Heatmap

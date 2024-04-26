@@ -1,22 +1,55 @@
-# Glass Draw (glsdrw)
+# Greetings
 
-This is a data analysis script, which I used in my thesis.
+Hello! I am Jari Haapasaari ([mail](mailto:haapjari@gmail.com)), and I originally developed the initial version of this project as a part of my thesis. Later I cleared and cleaned up the project, as it was pretty much just a collection of scripts. 
 
-This is a Python script that reads a cleaned dataset from a CSV file, normalizes and adjusts the data, and calculates quality measures for repositories extracted from the dataset. It then prompts the user to input parameters for a plot, which can be generated using either Pearson correlation or Spearman correlation.
+- Original Version Released: `20th October 2023`.
+- Cleaner Version Released: `26th April 2024`.
 
-The purpose of this script is to provide a tool for analyzing and visualizing relationships between various metrics for software repositories. It could be used, for example, to identify correlations between the size of a repository and the number of open or closed issues, or between the age of a repository and the number of stargazers.
+If you're interested into reproduce the research, please see: [repository-analysis-orchestration](https://github.com/haapjari/repository-analysis-orchestration) repository.
+
+## About
+
+This is an `Interface` for tool for [repository-analysis-orchestration](https://github.com/haapjari/repository-analysis-orchestration) that offers a command-line interface for the tool. The tool is designed to collect, normalize, and display data from repositories. 
+
+---
 
 ## Example
 
-Here is an example usage of this script:
+### Display Help Message
 
-1. Ensure that all required dependencies are installed.
-2. Save the cleaned dataset to a CSV file.
+```bash
+python -m src.main --help
+```
 
-In the specific case of this script, the dataset file should contain information about software repositories, including attributes such as repository name, repository URL, open issue count, closed issue count, commit count, open-closed ratio, stargazer count, creation date, latest release, original codebase size, library codebase size, and library-to-original ratio.
+### Collecting the Dataset
 
-The file should be cleaned and preprocessed to ensure that all data is in a consistent format and that any missing or invalid values have been handled appropriately.
+```bash
+python -m src.main -c 2021-01-01 2021-01-08 Python 100 10000 desc 
+```
 
-3. Run the script from the command line using `python3 main.py`
-4. Follow the prompts to choose a correlation type and input parameters for the plot.
-5. The script will generate a plot showing the relationship between the selected parameters and saves that to the `out` folder.
+### Normalizing the Dataset
+
+```bash
+python -m src.main --normalize
+```
+### Analyze the Dataset
+
+#### Distributions
+
+```bash
+python -m src.main --analyze dist stargazers forks ./out/distributions.png
+```
+
+#### Relationships
+
+```bash 
+python -m src.main --analyze plot stargazers forks pearson ./out/relationship_plot.png
+```
+
+#### Heatmap
+
+```bash
+python -m src.main --analyze heatmap stargazers forks self_written_loc commit_count pearson ./out/heatmap.png
+```
+
+---
