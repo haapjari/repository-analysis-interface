@@ -24,7 +24,7 @@ python -m src.main --help
 ### Collecting the Dataset
 
 ```bash
-python -m src.main -c 2021-01-01 2021-01-08 Python 100 10000 desc 
+python -m src.main --collect 2008-01-01 2008-06-01 Go 100 10000 desc 
 ```
 
 ### Normalizing the Dataset
@@ -37,19 +37,26 @@ python -m src.main --normalize
 #### Distributions
 
 ```bash
-python -m src.main --analyze dist stargazers forks ./out/distributions.png
+python -m src.main --dist --variables 'stargazers' --output ./output.png
+```
+
+#### Composite Scores
+
+```bash
+python -m src.main --composite --variables 'stargazers, forks' --name 'popularity' 
 ```
 
 #### Relationships
 
 ```bash 
-python -m src.main --analyze plot stargazers forks pearson ./out/relationship_plot.png
+python -m src.main --plot --variables 'stargazers, forks' --correlation pearson --output ./output.png
+
 ```
 
 #### Heatmap
 
 ```bash
-python -m src.main --analyze heatmap stargazers forks self_written_loc commit_count pearson ./out/heatmap.png
+python -m src.main --heatmap --variables 'stargazers, forks, commits' --correlation pearson --output ./output.png
 ```
 
 ---

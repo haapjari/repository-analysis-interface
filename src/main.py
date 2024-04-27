@@ -1,55 +1,118 @@
 import argparse
 import logging as log
-from src.dataset.dataset import Dataset
-from src.config.config import Config
+import sys
+
+from src.dataset.dataset import *
+from src.visual.visual import *
+from src.config.config import *
+from src.utils.utils import *
 
 
 def main():
     log.basicConfig(level=log.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
     parser = argparse.ArgumentParser(
-        description="Repository Analysis Interface\n\n"
-                    "Examples:\n"
-                    "  python -m src.main -c 2021-01-01 2021-01-08 Python 100 10000 desc\n"
-                    "  python -m src.main -n\n"
-                    "  python -m src.main -a dist 'stargazers, forks' spearman ./output.png\n",
+        description="Repository Analysis Interface\n\nExamples:\n"
+                    "  python -m src.main --collect 2008-01-01 2008-06-01 Go 100 10000 desc\n"
+                    "  python -m src.main --normalize\n"
+                    "  python -m src.main --composite --variables 'stargazers, forks' --name 'popularity'\n"
+                    "  python -m src.main --dist --variables 'stargazers' --output ./output.png\n"
+                    "  python -m src.main --plot --variables stargazers forks --correlation pearson --output ./output/plot.png\n"
+                    "  python -m src.main --heatmap --variables stargazers forks commits --correlation pearson --output ./output/heatmap.png\n",
         formatter_class=argparse.RawTextHelpFormatter,
-        add_help=False)  # Disable automatic help to customize help option
+        add_help=False)
 
-    parser.add_argument('-c', '--collect', action='store_true', help='Trigger dataset collection')
-    parser.add_argument('-n', '--normalize', action='store_true', help='Trigger dataset normalization')
-    parser.add_argument('-a', '--analyze', action='store_true', help='Trigger data analysis')
+    parser.add_argument('-h', '--help', action='help', help='Help Message')
 
-    parser.add_argument('first_creation_date', type=str, help='First Creation Date (YYYY-MM-DD)', nargs='?', default='')
-    parser.add_argument('last_creation_date', type=str, help='Last Creation Date (YYYY-MM-DD)', nargs='?', default='')
-    parser.add_argument('language', type=str, help='Programming Language', nargs='?', default='')
-    parser.add_argument('min_stars', type=int, help='Minimum number of stars', nargs='?', default=0)
-    parser.add_argument('max_stars', type=int, help='Maximum number of stars', nargs='?', default=0)
-    parser.add_argument('order', type=str, help='Order: "asc" or "desc"', choices=['asc', 'desc'], nargs='?', default='asc')
+    parser.add_argument('--collect', action='store_true', help='Collection')
+    parser.add_argument('--normalize', action='store_true', help='Normalization')
+    parser.add_argument('--composite', action='store_true', help='Creates Composite Variable')
+    parser.add_argument('--dist', action='store_true', help='Draw Distribution')
+    parser.add_argument('--plot', action='store_true', help='Draw Plot')
+    parser.add_argument('--heatmap', action='store_true', help='Draw Heatmap')
 
-    parser.add_argument('action', type=str, help='Type of analysis to perform (dist, plot, heatmap)', nargs='?', choices=['dist', 'plot', 'heatmap'], default='dist')
-    parser.add_argument('variables', nargs='*', help='Variables to include in the analysis')
-    parser.add_argument('correlation', type=str, help='Type of correlation for plotting (spearman, kendall, pearson)', choices=['spearman', 'kendall', 'pearson'], nargs='?', default='pearson')
-    parser.add_argument('output_path', type=str, help='Path to save the analysis output picture', nargs='?', default='')
+    if parser.parse_known_args()[0].collect:
+        collect_group = parser.add_argument_group('Collect Options')
+        collect_group.add_argument('first_creation_date', type=str, help='First Creation Date (YYYY-MM-DD)')
+        collect_group.add_argument('last_creation_date', type=str, help='Last Creation Date (YYYY-MM-DD)')
+        collect_group.add_argument('language', type=str, help='Programming Language')
+        collect_group.add_argument('min_stars', type=int, help='Minimum number of stars')
+        collect_group.add_argument('max_stars', type=int, help='Maximum number of stars')
+        collect_group.add_argument('order', type=str, help='Order: "asc" or "desc"', choices=['asc', 'desc'])
 
-    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
-                        help='Show this help message and exit. Example usage is listed above.')
+    if parser.parse_known_args()[0].dist:
+        dist_group = parser.add_argument_group('Distribution Options')
+        dist_group.add_argument('--variables', nargs='+', required=True, help='Variables for Distributions')
+        dist_group.add_argument('--output', type=str, required=True, help='Output path for the distribution plots')
+
+    if parser.parse_known_args()[0].plot:
+        plot_group = parser.add_argument_group('Plot Options')
+        plot_group.add_argument('--variables', nargs='+', required=True, help='Variables for Plot')
+        plot_group.add_argument('--correlation', type=str, choices=['spearman', 'kendall', 'pearson'],
+                                default='pearson', help='Correlation type: spearman, kendall or pearson')
+        plot_group.add_argument('--output', type=str, required=True, help='Output path for the plot')
+
+    if parser.parse_known_args()[0].heatmap:
+        plot_group = parser.add_argument_group('Heatmap Options')
+        plot_group.add_argument('--variables', nargs='+', required=True, help='Variables for Plot')
+        plot_group.add_argument('--correlation', type=str, choices=['spearman', 'kendall', 'pearson'],
+                                default='pearson', help='Correlation type: spearman, kendall or pearson')
+        plot_group.add_argument('--output', type=str, required=True, help='Output path for the plot')
+
+    if parser.parse_known_args()[0].composite:
+        plot_group = parser.add_argument_group('Composite Score Options')
+        plot_group.add_argument('--variables', nargs='+', required=True, help='Variables for Plot')
+        plot_group.add_argument('--name', type=str, required=True, help='New Name')
 
     args = parser.parse_args()
 
     if args.collect:
         c = Config()
-        d = Dataset(c, args.first_creation_date, args.last_creation_date, args.language, args.min_stars, args.max_stars, args.order)
+        d = Dataset(c, args.first_creation_date, args.last_creation_date, args.language, args.min_stars, args.max_stars,
+                    args.order)
         d.collect()
+
     elif args.normalize:
         c = Config()
-        d = Dataset(c, args.first_creation_date, args.last_creation_date, args.language, args.min_stars, args.max_stars, args.order)
+        d = Dataset(c)
         d.normalize()
-    elif args.analyze:
+
+    elif args.dist:
+        c: Config = Config()
+        v: Visual = Visual(c)
+
+        variables: dict = args.variables
+        output: str = args.output
+
+        if v.dist(variables, output) != 0:
+            log.error("Error, while drawing the distribution.")
+            sys.exit(1)
+
+    elif args.composite:
+        variables: dict = args.variables
+        name: str = args.name
         c = Config()
-        d = Dataset(c, args.first_creation_date, args.last_creation_date, args.language, args.min_stars, args.max_stars, args.order)
-        d.analyze()
+        d = Dataset(c)
+
+        if d.composite(variables, name) != 0:
+            log.error("Error, while creating the composite variable.")
+            sys.exit(1)
+
+    elif args.plot:
         # TODO
+        c = Config()
+        d = Dataset(c)
+        print(args.variables)
+        print(args.output)
+        print(args.correlation)
+
+    elif args.heatmap:
+        # TODO
+        c = Config()
+        d = Dataset(c)
+        print(args.variables)
+        print(args.output)
+        print(args.correlation)
     else:
         parser.print_help()
 
@@ -57,92 +120,8 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # # for i in range(len(library_loc)):
-    # #     total = self_written_loc[i] + library_loc[i]
-    # #     total_loc.append(total)
-    # #     library_loc_proportion.append(library_loc[i] / total)
-    # #     self_written_loc_proportion.append(self_written_loc[i] / total)
 
-    # # TODO
 
-    # data = pd.DataFrame({
-    #     'stargazers': stargazers,
-    #     'forks': forks,
-    #     'subscribers': subscribers,
-    #     'watchers': watchers,
-    #     'open_issues': open_issues,
-    #     'closed_issues': closed_issues,
-    #     'commits': commits,
-    #     'open_pulls': open_pulls,
-    #     'closed_pulls': closed_pulls,
-    #     'network_events': network_events,
-    #     'contributors': contributors,
-    #     'creation_date': creation_date,
-    #     'latest_release': latest_release,
-    #     'releases': releases,
-    # })
-
-    # stargazers = [float(x) for x in stargazers]
-    # forks = [float(x) for x in forks]
-    # subscribers = [float(x) for x in subscribers]
-    # watchers = [float(x) for x in watchers]
-    # open_issues = [float(x) for x in open_issues]
-    # closed_issues = [float(x) for x in closed_issues]
-    # commits = [float(x) for x in commits]
-    # open_pulls = [float(x) for x in open_pulls]
-    # closed_pulls = [float(x) for x in closed_pulls]
-    # network_events = [float(x) for x in network_events]
-    # contributors = [float(x) for x in contributors]
-    # creation_date = [float(x) for x in creation_date]
-    # latest_release = [float(x) for x in latest_release]
-    # releases = [float(x) for x in releases]
-
-    # bw_adj = 1
-    # linewidth = 1
-
-    # # Plotting the distribution
-    # sns.kdeplot(stargazers, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(forks, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(subscribers, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(watchers, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(open_issues, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(closed_issues, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(commits, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(open_pulls, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(closed_pulls, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(network_events, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(contributors, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(creation_date, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(latest_release, bw_adjust=bw_adj, linewidth=linewidth)
-    # sns.kdeplot(releases, bw_adjust=bw_adj, linewidth=linewidth)
-
-    # plt.xlabel("Value")
-    # plt.ylabel("Frequency")
-
-    # plt.grid(True, color='gray', linestyle='-', linewidth=0.5, alpha=0.75)
-
-    # plt.minorticks_on()
-    # plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black', alpha=0.5)
-
-    # # Save the plot to the "out" folder
-    # file_name = f"{datetime.now().isoformat()}_distributions.png"
-    # plt.savefig(f"out/{file_name}")
-
-    # analysis.visualize_multiple_distributions(data)
-    # analysis.visualize_distribution("watchers", watchers)
-
-    # Calculate composite scores for each group of metrics
-    # popularity_score = data.iloc[:, :4].sum(axis=1)
-    # activity_score = data.iloc[:, 4:11].sum(axis=1)
-    # maturity_score = data.iloc[:, 11:].sum(axis=1)
-
-    # Combine the composite scores into a single DataFrame
-    # composite_scores = pd.DataFrame({
-    #     'popularity_score': popularity_score,
-    #     'activity_score': activity_score,
-    #     'maturity_score': maturity_score,
-    #     'library_loc_proportion': library_loc_proportion
-    # })
 
     # correlation_matrix, p_value_matrix = spearmanr(composite_scores)
 

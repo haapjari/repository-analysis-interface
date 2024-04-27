@@ -7,7 +7,8 @@ from src.utils.utils import normalize_numeric, normalize_dates
 
 
 class Dataset:
-    def __init__(self, config, first_date, last_date, language, min_stars, max_stars, order: str):
+    def __init__(self, config, first_date=None, last_date=None, language=None, min_stars=None, max_stars=None,
+                 order: str = None):
         self.config = config
         self.first_date = first_date
         self.last_date = last_date
@@ -119,9 +120,9 @@ class Dataset:
         Normalize the collected data and send it to the Database API.
         """
         database_api_host = get("DATABASE_API_HOST")
-        url = f"{database_api_host}/api/v1/repos"
+        s = f"{database_api_host}/api/v1/repos"
 
-        response = requests.get(url)
+        response = requests.get(s)
         response.raise_for_status()
 
         repos = response.json()
@@ -175,6 +176,18 @@ class Dataset:
 
             response.raise_for_status()
 
-    def analyze(self):
+    @staticmethod
+    def composite(variables: dict, name: str) -> int:
+        """
+        Composite Function.
+        """
         # TODO
+
+        # Read Normalized Data from the Database API
+        # Match the "Variables" from the Data
+        # Create Weighted Sum of the "Variables"
+        # Store that to New Variable: "Name"
+
         pass
+
+
