@@ -1,4 +1,6 @@
 import json
+
+import pandas as pd
 import requests
 
 from datetime import datetime, timedelta
@@ -177,17 +179,39 @@ class Dataset:
             response.raise_for_status()
 
     @staticmethod
-    def composite(variables: dict, name: str) -> int:
+    def composite(variables: list, name: str) -> int:
         """
         Composite Function.
         """
-        # TODO
+        database_api_host = get("DATABASE_API_HOST")
+        s = f"{database_api_host}/api/v1/repos/normalized"
+        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
-        # Read Normalized Data from the Database API
-        # Match the "Variables" from the Data
-        # Create Weighted Sum of the "Variables"
-        # Store that to New Variable: "Name"
+        response = requests.get(s, headers=headers)
+        response.raise_for_status()
 
-        pass
+        repos = response.json()
 
+        df = pd.DataFrame(repos)
 
+        variables = [var.strip(',') for var in variables]
+
+        num_variables = len(variables)
+        even_weights = {var: 1.0 / num_variables for var in variables}
+
+        for index, repo in df.iterrows():
+            if all(var in repo for var in variables):
+                weighted_average = sum(repo[var] * even_weights[var] for var in variables)
+                df.at[index, name] = weighted_average
+
+        updated_repos = df.to_dict('records')
+
+        for updated_repo in updated_repos:
+            url = f"{database_api_host}/api/v1/repos/normalized/{updated_repo['id']}"
+            headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+            data = json.dumps(updated_repo)
+            print(data)
+            response = requests.put(url, headers=headers, data=data)
+            response.raise_for_status()
+
+        return 0

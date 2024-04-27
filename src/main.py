@@ -89,7 +89,7 @@ def main():
             sys.exit(1)
 
     elif args.composite:
-        variables: dict = args.variables
+        variables: list = args.variables
         name: str = args.name
         c = Config()
         d = Dataset(c)
