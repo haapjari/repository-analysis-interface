@@ -3,6 +3,7 @@ import requests
 
 from datetime import datetime, timedelta
 from src.config.config import get
+from src.utils.utils import normalize_numeric, normalize_dates
 
 
 class Dataset:
@@ -16,6 +17,9 @@ class Dataset:
         self.order = order
 
     def collect(self):
+        """
+        Collect data from the Search API and send it to the Database API.
+        """
         start_date = datetime.strptime(self.first_date, "%Y-%m-%d")
         end_date = datetime.strptime(self.last_date, "%Y-%m-%d")
         delta = end_date - start_date
@@ -109,15 +113,67 @@ class Dataset:
                         response = requests.post(url, headers=headers, data=json.dumps(payload))
                         response.raise_for_status()
 
-    def normalize(self):
-        # TODO
-        print("we are in normalize")
+    @staticmethod
+    def normalize():
+        """
+        Normalize the collected data and send it to the Database API.
+        """
+        database_api_host = get("DATABASE_API_HOST")
+        url = f"{database_api_host}/api/v1/repos"
 
-        print("read n entries from database")
-        print("normalize data")
-        print("save normalized data to normalize database")
+        response = requests.get(url)
+        response.raise_for_status()
 
-        pass
+        repos = response.json()
+
+        normalized_repos = {}
+        numeric_fields = [
+            "stargazer_count", "open_issues", "closed_issues",
+            "open_pull_request_count", "closed_pull_request_count",
+            "forks", "watcher_count", "subscriber_count", "commit_count",
+            "network_count", "total_releases_count", "contributor_count",
+            "third_party_loc", "self_written_loc"
+        ]
+
+        # This loop processes each repository in the 'repos' list by normalizing dates and numeric data.
+        # For each repository, it performs the following steps:
+        #
+        # 1. Creates a copy of the repository data.
+        # 2. Extracts and normalizes the date fields ('created_at' and 'latest_release').
+        # 3. Updates the repository copy with the normalized date values.
+        # 4. Collects numeric fields to be normalized, if they exist in the repository.
+        # 5. Normalizes these numeric fields and updates the repository copy with these values.
+        # 6. Stores each updated repository in the 'normalized_repos' dictionary using the repository's name as the key.
+        for r in repos:
+            repo_name = r['name']
+            normalized_repo = r.copy()
+
+            dates = {"created_at": r["created_at"], "latest_release": r["latest_release"]}
+            normalized_dates = normalize_dates(dates)
+
+            normalized_repo.update(normalized_dates)
+
+            numeric_values = {field: r[field] for field in numeric_fields if field in r}
+            if numeric_values:
+                normalized_numerics = normalize_numeric(numeric_values)
+                normalized_repo.update(normalized_numerics)
+
+            normalized_repos[repo_name] = normalized_repo
+
+        # This loop sends the normalized repository data to the database API.
+        # For each repository in the 'normalized_repos' dictionary, it performs the following steps:
+        # 1. Constructs the URL for the normalized repository data.
+        # 2. Converts the repository data to JSON format.
+        # 3. Sends a POST request to the database API with the JSON data.
+        for repo_name, repo_data in normalized_repos.items():
+            s = f"{database_api_host}/api/v1/repos/normalized"
+            headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+
+            data_json = json.dumps(repo_data)
+
+            response = requests.post(s, headers=headers, data=data_json)
+
+            response.raise_for_status()
 
     def analyze(self):
         # TODO

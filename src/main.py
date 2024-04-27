@@ -57,28 +57,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-    #     for row in reader:
-    #         open_issues.append(row.get('open_issues'))
-    #         closed_issues.append(row.get('closed_issues'))
-    #         commits.append(row.get('commits'))
-    #         self_written_loc.append(row.get('self_written_loc'))
-    #         library_loc.append(row.get('library_loc'))
-    #         creation_date.append(row.get('creation_date'))
-    #         stargazers.append(row.get('stargazers'))
-    #         latest_release.append(row.get('latest_release'))
-    #         forks.append(row.get('forks'))
-    #         open_pulls.append(row.get('open_pulls'))
-    #         closed_pulls.append(row.get('closed_pulls'))
-    #         releases.append(row.get('releases'))
-    #         network_events.append(row.get('network_events'))
-    #         subscribers.append(row.get('subscribers'))
-    #         contributors.append(row.get('contributors'))
-    #         watchers.append(row.get('watchers'))
-
-    # # library_loc_proportion = []
-    # # self_written_loc_proportion = []
-    # # total_loc = []
-
     # # for i in range(len(library_loc)):
     # #     total = self_written_loc[i] + library_loc[i]
     # #     total_loc.append(total)

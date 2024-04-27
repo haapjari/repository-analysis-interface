@@ -1,3 +1,69 @@
+import numpy as np
+import pandas as pd
+import logging as log
+from sklearn.preprocessing import MinMaxScaler
+
+
+def normalize_numeric(data_dict):
+    """
+    Normalize Numeric Values in a Dictionary.
+    """
+
+    # Keys.
+    keys = list(data_dict.keys())
+
+    # Convert to Integers (Including Strings)
+    values = [int(value) if isinstance(value, str) else value for value in data_dict.values()]
+
+    # Transform Values into Numpy Array.
+    values_array = np.array(values).reshape(-1, 1)
+
+    scaler = MinMaxScaler()
+    normalized_values = scaler.fit_transform(values_array)
+
+    # Convert to Dictionary.
+    normalized_dict = dict(zip(keys, normalized_values.flatten()))
+
+    return normalized_dict
+
+
+def normalize_dates(data_dict):
+    """
+    Normalize Dates in a Dictionary. Handles Out of Bounds Datetime errors and defaults to 0.0 if necessary.
+    """
+
+    keys = list(data_dict.keys())
+    timestamps = []
+
+    # Convert to UNIX Timestamps.
+    for i, date in enumerate(data_dict.values()):
+        try:
+            timestamp = pd.to_datetime(date).timestamp()
+            timestamps.append(timestamp)
+        except Exception as e:
+            log.error(f"Error: {e} for date '{date}' at position {i}")
+            timestamps.append(None)
+
+    valid_indices = [i for i, ts in enumerate(timestamps) if ts is not None]
+    valid_keys = [keys[i] for i in valid_indices]
+    valid_timestamps = [timestamps[i] for i in valid_indices]
+
+    if valid_timestamps:
+        timestamps_array = np.array(valid_timestamps).reshape(-1, 1)
+        scaler = MinMaxScaler()
+        normalized_timestamps = scaler.fit_transform(timestamps_array).flatten()
+
+        normalized_dict = {key: norm_ts for key, norm_ts in zip(valid_keys, normalized_timestamps)}
+    else:
+        normalized_dict = {}
+
+    for key in keys:
+        if key not in normalized_dict:
+            normalized_dict[key] = 0.0
+
+    return normalized_dict
+
+
 # def multiple_linear_regression(independent_vars, dependent_var, column_names):
 #     # Convert lists to a DataFrame
 #     data = pd.DataFrame(np.column_stack(independent_vars), columns=column_names[:-1])
@@ -73,19 +139,8 @@
 #     plt.savefig(f"out/{file_name}")
 
 
-# def normalize_values(data):
-#     ids, values = zip(*data)
-#
-#     values_array = np.array(values).reshape(-1, 1)
-#
-#     # Apply MinMaxScaler
-#     scaler = MinMaxScaler()
-#     normalized_values_array = scaler.fit_transform(values_array)
-#
-#     # Combine the IDs and normalized values back into the desired format
-#     normalized_data = [(id, value[0]) for id, value in zip(ids, normalized_values_array)]
-#
-#     return normalized_data
+
+
 
 
 # def calc_corr_matrix(df, method):
@@ -294,101 +349,3 @@
 #         os.makedirs("out")
 #
 #     plt.savefig("out/" + iso_date_string + "_" + analysis_method + "_" + x_name + "_to_" + y_name + # '.png', dpi=300, bbox_inches='tight', pad_inches=0.1)
-#
-#
-# def visualize_categories(categories, corr_type, chart_type):
-#     if chart_type == "bar":
-#         x_labels = list(categories.keys())
-#         y_values = [len(categories[k]) for k in x_labels]
-#         fig, ax = plt.subplots(figsize=(8, 6))
-#         ax.bar(x_labels, y_values, color=['#cccccc', '#cccccc', '#cccccc', '#cccccc', '#cccccc'])
-#         ax.set_title('Correlation Categories')
-#         ax.set_xlabel('Category')
-#         ax.set_ylabel('Number of Correlations')
-#         plt.xticks(rotation=45)
-#         plt.tight_layout()
-#         plt.savefig('correlation_categories.png')
-#
-#         if not os.path.exists("out"):
-#             os.makedirs("out")
-#
-#         # Save the plot to a file
-#         plt.savefig('out' + '/' + datetime.now().isoformat() + "_" + corr_type + "_" + # 'correlation_categories' + "_" + chart_type + '.png')
-#
-#     if chart_type == "bubble":
-#         fig, ax = plt.subplots()
-#         ax.set_xlabel('Variable 1')
-#         ax.set_ylabel('Variable 2')
-#         ax.set_title('Correlation Coefficient Bubble Chart')
-#
-#         for category, pairs in categories.items():
-#             for pair in pairs:
-#                 x, y = pair[0]
-#                 size = abs(pair[1]) * 100
-#                 color = 'red' if pair[1] < 0 else 'green'
-#                 ax.scatter(x, y, s=size, c=color, alpha=0.5, label=category)
-#
-#         ax.legend(loc='best', title='Category')
-#         fig.tight_layout()
-#
-#         if not os.path.exists("out"):
-#             os.makedirs("out")
-#
-#         plt.savefig('out' + '/' + datetime.now().isoformat() + "_" + corr_type + "_" + # 'correlation_categories' + "_" + chart_type + '.png')
-#
-#
-# def visualize_dendrogram(lists, corr_type, linkage_method='ward'):
-#     """
-#     Visualizes a dendrogram using hierarchical clustering.
-#
-#     Parameters:
-#     lists (list): a list of tuples containing the column names and corresponding values
-#     corr_type (str): the type of correlation used (e.g., "spearman", default: "spearman")
-#     linkage_method (str): the linkage method to use for clustering (default: 'ward')
-#
-#     Returns:
-#     None
-#     """
-#
-#     # Create a DataFrame from the lists
-#     data = pd.DataFrame(dict(lists))
-#
-#     # Calculate the correlation matrix
-#     if corr_type == "spearman":
-#         corr_matrix = data.corr(method='spearman')
-#
-#     if corr_type == "pearson":
-#         corr_matrix = data.corr(method='pearson')
-#
-#     if corr_type == "kendall":
-#         corr_matrix = data.corr(method='kendall')
-#
-#     # Force the correlation matrix to be symmetric
-#     corr_matrix = (corr_matrix + corr_matrix.T) / 2
-#
-#     # Convert correlation matrix to distance matrix
-#     dist_matrix = numpy.sqrt(1 - numpy.abs(corr_matrix))
-#
-#     # Convert the distance matrix DataFrame to a NumPy array
-#     dist_matrix = dist_matrix.to_numpy()
-#
-#     # Set the diagonal of the distance matrix to zero
-#     numpy.fill_diagonal(dist_matrix, 0)
-#
-#     # Perform hierarchical clustering
-#     Z = linkage(squareform(dist_matrix), method='ward')
-#
-#     # Extract the variable names from the lists
-#     variable_names = [tup[0] for tup in lists]
-#
-#     # Plot dendrogram with variable names
-#    plt.figure(figsize=(10, 8))
-#    dendrogram(Z, labels=variable_names, orientation='right', leaf_font_size=6)
-#
-#    # Set plot parameters
-#    plt.xlabel('Distance')
-#
-#    if not os.path.exists("out"):
-#        os.makedirs("out")
-#
-#    plt.savefig('out' + '/' + datetime.now().isoformat() + "_" + corr_type + "_" + 'dendogram.png')
