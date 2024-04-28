@@ -179,7 +179,7 @@ class Dataset:
             response.raise_for_status()
 
     @staticmethod
-    def composite(variables: list, name: str) -> int:
+    def composite(variables: list, name: str):
         """
         Composite Function.
         """
@@ -213,5 +213,3 @@ class Dataset:
             print(data)
             response = requests.put(url, headers=headers, data=data)
             response.raise_for_status()
-
-        return 0

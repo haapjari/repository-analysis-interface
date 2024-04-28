@@ -70,12 +70,21 @@ def main():
         c = Config()
         d = Dataset(c, args.first_creation_date, args.last_creation_date, args.language, args.min_stars, args.max_stars,
                     args.order)
-        d.collect()
+        try:
+            d.collect()
+        except Exception as e:
+            log.error(e)
+            sys.exit(1)
 
     elif args.normalize:
         c = Config()
         d = Dataset(c)
-        d.normalize()
+
+        try:
+            d.normalize()
+        except Exception as e:
+            log.error(e)
+            sys.exit(1)
 
     elif args.dist:
         c: Config = Config()
@@ -84,8 +93,10 @@ def main():
         variables: dict = args.variables
         output: str = args.output
 
-        if v.dist(variables, output) != 0:
-            log.error("Error, while drawing the distribution.")
+        try:
+            v.dist(variables, output)
+        except Exception as e:
+            log.error(e)
             sys.exit(1)
 
     elif args.composite:
@@ -94,8 +105,10 @@ def main():
         c = Config()
         d = Dataset(c)
 
-        if d.composite(variables, name) != 0:
-            log.error("Error, while creating the composite variable.")
+        try:
+            d.composite(variables, name)
+        except Exception as e:
+            log.error(e)
             sys.exit(1)
 
     elif args.plot:
@@ -113,12 +126,19 @@ def main():
             sys.exit(1)
 
     elif args.heatmap:
-        # TODO
         c = Config()
-        d = Dataset(c)
-        print(args.variables)
-        print(args.output)
-        print(args.correlation)
+        v: Visual = Visual(c)
+
+        variables: dict = args.variables
+        output: str = args.output
+        correlation: str = args.correlation
+
+        try:
+            v.heatmap(variables, correlation, output)
+        except Exception as e:
+            log.error(e)
+            sys.exit(1)
+
     else:
         parser.print_help()
 

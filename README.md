@@ -37,26 +37,26 @@ python -m src.main --normalize
 #### Distributions
 
 ```bash
-python -m src.main --dist --variables 'stargazers' --output ./output.png
+python -m src.main --dist --variables stargazer_count --output ./output.png
 ```
 
 #### Composite Scores
 
 ```bash
-python -m src.main --composite --variables 'stargazers, forks' --name 'popularity' 
+python -m src.main --composite --variables stargazer_count forks --name popularity 
 ```
 
 #### Relationships
 
 ```bash 
-python -m src.main --plot --variables 'stargazers, forks' --correlation pearson --output ./output.png
+python -m src.main --plot --variables stargazer_count forks --correlation pearson --output ./output.png
 
 ```
 
 #### Heatmap
 
 ```bash
-python -m src.main --heatmap --variables 'stargazers, forks, commits' --correlation pearson --output ./output.png
+python -m src.main --heatmap --variables stargazer_count, forks, commit_count --correlation pearson --output ./output.png
 ```
 
 ---
