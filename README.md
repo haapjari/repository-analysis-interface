@@ -3,7 +3,7 @@
 Hello! I am Jari Haapasaari ([mail](mailto:haapjari@gmail.com)), and I originally developed the initial version of this project as a part of my thesis. Later I cleared and cleaned up the project, as it was pretty much just a collection of scripts. 
 
 - Original Version Released: `20th October 2023`.
-- Cleaner Version Released: `26th April 2024`.
+- Cleaner Version Released: `28th April 2024`.
 
 If you're interested into reproduce the research, please see: [repository-analysis-orchestration](https://github.com/haapjari/repository-analysis-orchestration) repository.
 
@@ -24,7 +24,7 @@ python -m src.main --help
 ### Collecting the Dataset
 
 ```bash
-python -m src.main --collect 2008-01-01 2009-01-01 Go 100 10000 desc 
+python -m src.main --collect 2008-01-01 2009-03-01 Go 100 10000 desc 
 ```
 
 ### Normalizing the Dataset
@@ -40,7 +40,7 @@ python -m src.main --normalize
 python -m src.main --dist --variables stargazer_count --output ./output.png
 ```
 
-#### Composite Scores
+#### Create Composite Scores
 
 ```bash
 python -m src.main --composite --variables stargazer_count forks --name popularity 

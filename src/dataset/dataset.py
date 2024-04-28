@@ -32,6 +32,10 @@ class Dataset:
         token = get("GITHUB_TOKEN")
 
         if delta.days > 7:
+            """
+            If the date range is greater than 7 days, the function will split the range into weekly intervals and
+            collect data for each week.
+            """
             current_date = start_date
             while current_date < end_date:
                 week_end = min(current_date + timedelta(days=7), end_date)
@@ -47,6 +51,11 @@ class Dataset:
                     for repo in data["items"]:
                         if repo is not None:
                             url = f"{database_api_host}/api/v1/repos"
+
+                            total_loc = repo['self_written_loc'] + repo['third_party_loc']
+
+                            self_written_loc_proportion = repo['self_written_loc'] / total_loc if total_loc > 0 else 0
+                            third_party_loc_proportion = repo['third_party_loc'] / total_loc if total_loc > 0 else 0
 
                             payload = {
                                 "name": repo["name"],
@@ -67,7 +76,9 @@ class Dataset:
                                 "total_releases_count": repo["total_releases_count"],
                                 "contributor_count": repo["contributor_count"],
                                 "third_party_loc": repo["third_party_loc"],
-                                "self_written_loc": repo["self_written_loc"]
+                                "self_written_loc": repo["self_written_loc"],
+                                "self_written_loc_proportion": self_written_loc_proportion,
+                                "third_party_loc_proportion": third_party_loc_proportion,
                             }
 
                             headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
@@ -78,6 +89,9 @@ class Dataset:
 
                 current_date += timedelta(days=7 + 1)
         else:
+            """
+            If the date range is less than or equal to 7 days, the function will collect data for the entire range.
+            """
             s = f"{search_api_host}/api/v1/repos/search?firstCreationDate={start_date.date()}&lastCreationDate={end_date.date()}&language={self.language}&minStars={self.min_stars}&maxStars={self.max_stars}&order={self.order}"
 
             response = requests.get(s, headers={"Authorization": f"Bearer {token}"})
@@ -181,7 +195,7 @@ class Dataset:
     @staticmethod
     def composite(variables: list, name: str):
         """
-        Composite Function.
+        Create required composite variables on-demand, and update them in the Database Entries.
         """
         database_api_host = get("DATABASE_API_HOST")
         s = f"{database_api_host}/api/v1/repos/normalized"

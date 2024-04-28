@@ -18,7 +18,7 @@ class Visual:
     @staticmethod
     def dist(variables: dict, output: str):
         """
-        Generate distribution.
+        Draw a distribution plot for the provided variable.
         """
         var: str = variables[0]
 
@@ -39,6 +39,9 @@ class Visual:
 
     @staticmethod
     def plot(variables: dict, correlation: str, output: str):
+        """
+        Draw a scatter plot for the provided variables.
+        """
         if len(variables) != 2:
             log.error("Please provide exactly two variables.")
             raise ValueError("Please provide exactly two variables.")
@@ -65,6 +68,9 @@ class Visual:
 
     @staticmethod
     def heatmap(variables: dict, correlation: str, output: str):
+        """
+        Draw a heatmap for the provided variables.
+        """
         print(variables)
         print(correlation)
         print(output)
@@ -126,6 +132,9 @@ def draw_dist(data, name, output):
 
 
 def draw_plot(method: str, x_title: str, y_title: str, x_input: list, y_input: list, output: str):
+    """
+    Draw a scatter plot for the provided variables.
+    """
     x = numpy.ravel(x_input)
     y = numpy.ravel(y_input)
 
@@ -186,6 +195,9 @@ def draw_plot(method: str, x_title: str, y_title: str, x_input: list, y_input: l
 
 
 def correlation_matrix(df, method: str):
+    """
+    Calculate the correlation matrix for the given dataframe.
+    """
     n = len(df.columns)
     corr_matrix = pd.DataFrame(np.zeros((n, n)), columns=df.columns, index=df.columns)
     for i in range(n):
@@ -203,6 +215,9 @@ def correlation_matrix(df, method: str):
 
 
 def draw_heatmap(data: dict, correlation: str, output: str):
+    """
+    Draw a heatmap for the provided variables.
+    """
     df = pd.DataFrame(data)
 
     corr_matrix = correlation_matrix(df, correlation)
