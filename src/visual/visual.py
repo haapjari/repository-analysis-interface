@@ -1,7 +1,10 @@
 import logging as log
+
+import numpy
 import requests
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.stats import pearsonr, spearmanr, kendalltau
 import pandas as pd
 import numpy as np
 
@@ -40,8 +43,31 @@ class Visual:
 
         return 0
 
-    def plot(self):
-        pass
+    @staticmethod
+    def plot(variables: dict, correlation: str, output: str):
+        if len(variables) != 2:
+            log.error("Please provide exactly two variables.")
+            raise ValueError("Please provide exactly two variables.")
+        x_title: str = variables[0]
+        x_values: list = []
+        y_title: str = variables[1]
+        y_values: list = []
+
+        database_api_host = get("DATABASE_API_HOST")
+        s = f"{database_api_host}/api/v1/repos/normalized"
+
+        response = requests.get(s)
+        response.raise_for_status()
+
+        repos = response.json()
+
+        for repo in repos:
+            if x_title in repo:
+                x_values.append(repo[x_title])
+            if y_title in repo:
+                y_values.append(repo[y_title])
+
+        draw_plot(correlation, x_title, y_title, x_values, y_values, output)
 
     def heatmap(self):
         pass
@@ -80,6 +106,67 @@ def draw_dist(data, name, output):
 
     plt.savefig(output)
     plt.close()
+
+
+def draw_plot(method: str, x_title: str, y_title: str, x_input: list, y_input: list, output: str):
+    x = numpy.ravel(x_input)
+    y = numpy.ravel(y_input)
+
+    coefficient = None
+    p = None
+
+    if method == "pearson":
+        coefficient, p = pearsonr(x, y)
+        log.debug(f"Pearson's Correlation Coefficient: {coefficient} and Probability Value: {p}")
+
+    if method == "spearman":
+        coefficient, p = spearmanr(x, y)
+        log.debug(f"Spearman's Correlation Coefficient: {coefficient} and Probability Value: {p}")
+
+    if method == "kendall":
+        coefficient, p = kendalltau(x, y)
+        log.debug(f"Kendall's Correlation Coefficient: {coefficient} and Probability Value: {p}")
+
+    # Calculate coefficients, and function for the line of best fit.
+    data = numpy.polyfit(x, y, 1)
+    polynomial = numpy.poly1d(data)
+
+    # Plot the Values
+    plt.scatter(x, y, color='black', s=0.5, alpha=1, marker="o", linewidth=0, label="Data Points", zorder=1, edgecolors=None, facecolors=None, antialiased=True, rasterized=None, norm=None, vmin=None, vmax=None, data=None)
+
+    plt.plot(x, polynomial(x), color='black', linewidth=0.1, label="Linear Regression", zorder=1, antialiased=True, rasterized=True, data=None)
+    plt.xlabel(x_title)
+    plt.ylabel(y_title)
+    plt.autoscale(enable=True, axis='both', tight=None)
+
+    legend_coefficient = plt.legend(["r = " + str(coefficient)], loc='upper right', bbox_to_anchor=(1.0, 1.0))
+
+    if method == "pearson":
+        legend_coefficient.set_title("Pearson's Correlation Coefficient")
+
+    if method == "spearman":
+        legend_coefficient.set_title("Spearman's Correlation Coefficient")
+
+    if method == "kendall":
+        legend_coefficient.set_title("Kendall's Correlation Coefficient")
+
+    legend_coefficient.get_title().set_fontsize('small')
+    legend_coefficient.get_title().set_fontweight('bold')
+
+    legend_p = plt.legend(["p = " + str(p)], loc='upper right', bbox_to_anchor=(1.0, 0.85))
+    legend_p.set_title("Probability Value")
+    legend_p.get_title().set_fontsize('small')
+    legend_p.get_title().set_fontweight('bold')
+
+    plt.gca().add_artist(legend_coefficient)
+    plt.gca().add_artist(legend_p)
+
+    plt.grid(True, which='major', axis='both', linestyle='-', linewidth=0.05, color='grey', alpha=0.75)
+
+    plt.axis([min(x), max(x), min(y), max(y)])
+
+    plt.savefig(output, dpi=300, bbox_inches='tight', pad_inches=0.1)
+
 
 # def multiple_linear_regression(independent_vars, dependent_var, column_names):
 #     # Convert lists to a DataFrame
@@ -205,50 +292,6 @@ def draw_dist(data, name, output):
 #     return corr_matrix
 
 
-# def categorize_correlations(lists, corr_type):
-#     categories = {
-#         "Very Weak": [],
-#         "Weak": [],
-#         "Moderate": [],
-#         "Strong": [],
-#         "Very Strong": []
-#     }
-#
-#     # Create a DataFrame from the lists
-#     data = pd.DataFrame(dict(lists))
-#
-#     # Compute the correlation matrix
-#     corr_matrix = data.corr()
-#
-#     variable_names = corr_matrix.columns
-#
-#     for i in range(corr_matrix.shape[0]):
-#         for j in range(i + 1, corr_matrix.shape[1]):
-#             corr = corr_matrix.iloc[i, j]
-#             if corr <= -0.7 or corr >= 0.7:
-#                 categories["Very Strong"].append(((variable_names[i], variable_names[j]), corr))
-#             elif corr <= -0.5 or corr >= 0.5:
-#                 categories["Strong"].append(((variable_names[i], variable_names[j]), corr))
-#             elif corr <= -0.3 or corr >= 0.3:
-#                 categories["Moderate"].append(((variable_names[i], variable_names[j]), corr))
-#             elif corr <= -0.1 or corr >= 0.1:
-#                 categories["Weak"].append(((variable_names[i], variable_names[j]), corr))
-#             else:
-#                 categories["Very Weak"].append(((variable_names[i], variable_names[j]), corr))
-#
-#     if not os.path.exists("out"):
-#         os.makedirs("out")
-#
-#     with open("out" + "/" + datetime.now().isoformat() + "_" + corr_type + "_" + "categories.txt", # 'w') as f:
-#         for category, values in categories.items():
-#             f.write(f"{category}:\n")
-#             for value in values:
-#                 f.write(f"- {value}\n")
-#             f.write("\n")
-#
-#     return categories
-
-
 # def cluster_correlation_matrix(corr_matrix, corr_type, n_clusters=2, # linkage_method='ward'):
 #     """
 #     Clusters a correlation matrix using hierarchical clustering.
@@ -285,80 +328,3 @@ def draw_dist(data, name, output):
 #    return labels
 
 
-# from datetime import datetime
-# from scipy.stats import pearsonr, spearmanr, kendalltau
-# from scipy.spatial.distance import squareform
-# from scipy.cluster.hierarchy import linkage, dendrogram
-#
-# import pandas as pd
-# import numpy
-# import matplotlib.pyplot as plt
-# import matplotlib as mpl
-# import os
-#
-# mpl.use('agg')
-#
-# def plot(analysis_method, x_values, x_name, y_values, y_name):
-#     x = numpy.ravel(x_values)
-#     y = numpy.ravel(y_values)
-#
-#     coefficient = None
-#     p = None
-#
-#     if analysis_method == "pearson":
-#         coefficient, p = pearsonr(x, y)
-#
-#         print("Pearson's Correlation Coefficient: {} and Probability Value: {}".format(# coefficient, p))
-#
-#     if analysis_method == "spearman":
-#         coefficient, p = spearmanr(x, y)
-#
-#         print("Spearman's Correlation Coefficient: {} and Probability Value: {}".format(# coefficient, p))
-#
-#     if analysis_method == "kendall":
-#         coefficient, p = kendalltau(x, y)
-#
-#         print("Kendall's Correlation Coefficient: {} and Probability Value: {}".format(# coefficient, p))
-#
-#     # Calculate coefficients, and function for the line of best fit.
-#     data = numpy.polyfit(x, y, 1)
-#     polynomial = numpy.poly1d(data)
-#
-#     # Plot the Values
-#     plt.scatter(x, y, color='black', s=0.5, alpha=1, marker="o", linewidth=0, label="Data Points", # zorder=1, edgecolors=None, facecolors=None, antialiased=True, rasterized=None, norm=None, vmin=None, # vmax=None, data=None)
-#     plt.plot(x, polynomial(x), color='black', linewidth=0.1, label="Linear Regression", zorder=1, # antialiased=True, rasterized=True, data=None)
-#     plt.xlabel(x_name)
-#     plt.ylabel(y_name)
-#     plt.autoscale(enable=True, axis='both', tight=None)
-#
-#     legend_coefficient = plt.legend(["r = " + str(coefficient)], loc='upper right', bbox_to_anchor=(# 1.0, 1.0))
-#
-#     if analysis_method == "pearson":
-#         legend_coefficient.set_title("Pearson's Correlation Coefficient")
-#
-#     if analysis_method == "spearman":
-#         legend_coefficient.set_title("Spearman's Correlation Coefficient")
-#
-#     legend_coefficient.get_title().set_fontsize('small')
-#     legend_coefficient.get_title().set_fontweight('bold')
-#
-#     legend_p = plt.legend(["p = " + str(p)], loc='upper right', bbox_to_anchor=(1.0, 0.85))
-#     legend_p.set_title("Probability Value")
-#     legend_p.get_title().set_fontsize('small')
-#     legend_p.get_title().set_fontweight('bold')
-#
-#     plt.gca().add_artist(legend_coefficient)
-#     plt.gca().add_artist(legend_p)
-#
-#     plt.grid(True, which='major', axis='both', linestyle='-', linewidth=0.05, color='grey', # alpha=0.75)
-#
-#     now = datetime.now()
-#     iso_date_string = now.isoformat()
-#
-#     ## Limiting the x -axis to make the plot more readable.
-#     plt.axis([min(x), max(x), min(y), max(y)])
-#
-#     if not os.path.exists("out"):
-#         os.makedirs("out")
-#
-#     plt.savefig("out/" + iso_date_string + "_" + analysis_method + "_" + x_name + "_to_" + y_name + # '.png', dpi=300, bbox_inches='tight', pad_inches=0.1)

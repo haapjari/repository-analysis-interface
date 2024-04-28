@@ -24,7 +24,7 @@ python -m src.main --help
 ### Collecting the Dataset
 
 ```bash
-python -m src.main --collect 2008-01-01 2008-06-01 Go 100 10000 desc 
+python -m src.main --collect 2008-01-01 2009-01-01 Go 100 10000 desc 
 ```
 
 ### Normalizing the Dataset

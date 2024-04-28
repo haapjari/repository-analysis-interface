@@ -12,24 +12,24 @@ def main():
     log.basicConfig(level=log.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
     parser = argparse.ArgumentParser(
-        description="Repository Analysis Interface\n\nExamples:\n"
+        description="examples:\n"
                     "  python -m src.main --collect 2008-01-01 2008-06-01 Go 100 10000 desc\n"
                     "  python -m src.main --normalize\n"
                     "  python -m src.main --composite --variables 'stargazers, forks' --name 'popularity'\n"
-                    "  python -m src.main --dist --variables 'stargazers' --output ./output.png\n"
+                    "  python -m src.main --dist --variables stargazers --output ./output.png\n"
                     "  python -m src.main --plot --variables stargazers forks --correlation pearson --output ./output/plot.png\n"
                     "  python -m src.main --heatmap --variables stargazers forks commits --correlation pearson --output ./output/heatmap.png\n",
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=False)
 
-    parser.add_argument('-h', '--help', action='help', help='Help Message')
+    parser.add_argument('--help', action='help', help='Help Message')
 
-    parser.add_argument('--collect', action='store_true', help='Collection')
-    parser.add_argument('--normalize', action='store_true', help='Normalization')
-    parser.add_argument('--composite', action='store_true', help='Creates Composite Variable')
-    parser.add_argument('--dist', action='store_true', help='Draw Distribution')
-    parser.add_argument('--plot', action='store_true', help='Draw Plot')
-    parser.add_argument('--heatmap', action='store_true', help='Draw Heatmap')
+    parser.add_argument('--collect', action='store_true', help='Start Dataset Collection')
+    parser.add_argument('--normalize', action='store_true', help='Normalize Collected Dataset')
+    parser.add_argument('--composite', action='store_true', help='Calculate Composite Variables')
+    parser.add_argument('--dist', action='store_true', help='Draw Distribution Image to the Output Path')
+    parser.add_argument('--plot', action='store_true', help='Draw Plot Image to the Output Path')
+    parser.add_argument('--heatmap', action='store_true', help='Draw Heatmap to the Output Path')
 
     if parser.parse_known_args()[0].collect:
         collect_group = parser.add_argument_group('Collect Options')
@@ -99,12 +99,18 @@ def main():
             sys.exit(1)
 
     elif args.plot:
-        # TODO
         c = Config()
-        d = Dataset(c)
-        print(args.variables)
-        print(args.output)
-        print(args.correlation)
+        v: Visual = Visual(c)
+
+        variables: dict = args.variables
+        output: str = args.output
+        correlation: str = args.correlation
+
+        try:
+            v.plot(variables, correlation, output)
+        except Exception as e:
+            log.error(e)
+            sys.exit(1)
 
     elif args.heatmap:
         # TODO
