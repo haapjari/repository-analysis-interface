@@ -224,6 +224,5 @@ class Dataset:
             url = f"{database_api_host}/api/v1/repos/normalized/{updated_repo['id']}"
             headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
             data = json.dumps(updated_repo)
-            print(data)
             response = requests.put(url, headers=headers, data=data)
             response.raise_for_status()

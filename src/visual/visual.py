@@ -20,7 +20,6 @@ class Visual:
         """
         Draw a distribution plot for the provided variable.
         """
-        var: str = variables[0]
 
         database_api_host = get("DATABASE_API_HOST")
         s = f"{database_api_host}/api/v1/repos/normalized"
@@ -30,12 +29,17 @@ class Visual:
 
         repos = response.json()
 
-        data = []
+        data: dict = {}
 
         for repo in repos:
-            data.append(repo[var])
+            if all(var in repo for var in variables):
+                for key in variables:
+                    if key in data:
+                        data[key].append(repo[key])
+                    else:
+                        data[key] = [repo[key]]
 
-        draw_dist(data, var, output)
+        draw_dist(data, output)
 
     @staticmethod
     def plot(variables: dict, correlation: str, output: str):
@@ -71,9 +75,6 @@ class Visual:
         """
         Draw a heatmap for the provided variables.
         """
-        print(variables)
-        print(correlation)
-        print(output)
 
         database_api_host = get("DATABASE_API_HOST")
         s = f"{database_api_host}/api/v1/repos/normalized"
@@ -96,38 +97,33 @@ class Visual:
         draw_heatmap(data, correlation, output)
 
 
-def draw_dist(data, name, output):
+def draw_dist(data, output):
     """
-    Generates and saves a histogram with KDE for the provided data.
+    Generates and saves a histogram with KDE for each provided data series in a single plot.
 
     Args:
-    data (pandas.Series): Data series to plot.
-    name (str): Name for the plot and part of the output file name.
-    output_path (str): Full path including the filename to save the output plot file.
-
+        data (dict): Dictionary with keys as the variable names and values as lists of values to plot.
+        output (str): Path including the filename to save the output plot file.
     """
     sns.set(style="whitegrid", context="notebook")
 
-    plt.figure()
+    plt.figure(figsize=(10, 6))
 
-    bw_adj = 1
-    linewidth = 1
-
-    # Plotting the distribution
-    sns.kdeplot(data, bw_adjust=bw_adj, linewidth=linewidth)
-    sns.histplot(data)
+    # Iterate over each data series to plot
+    for name, values in data.items():
+        sns.kdeplot(values, bw_adjust=0.5, label=name)
 
     plt.grid(True, color='gray', linestyle='-', linewidth=0.5, alpha=0.75)
-
     plt.minorticks_on()
     plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black', alpha=0.5)
 
     plt.xlabel("Value", fontsize=10)
     plt.ylabel("Frequency", fontsize=10)
-    plt.title(f"Distribution of {name}", fontsize=12)
+    plt.title("Distributions of Dataset Variables", fontsize=12)
     plt.xlim(0, 1.0)
+    plt.legend()
 
-    plt.savefig(output)
+    plt.savefig(output, bbox_inches='tight')
     plt.close()
 
 

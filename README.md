@@ -37,7 +37,7 @@ python -m src.main --normalize
 #### Distributions
 
 ```bash
-python -m src.main --dist --variables stargazer_count --output ./output.png
+python -m src.main --dist --variables latest_release created_at stargazer_count open_issues closed_issues open_pull_request_count closed_pull_request_count forks watcher_count subscriber_count commit_count network_count total_releases_count contributor_count third_party_loc self_written_loc popularity activity maturity self_written_loc_proportion third_party_loc_proportion --output ./output.png
 ```
 
 #### Create Composite Scores
@@ -56,7 +56,7 @@ python -m src.main --plot --variables stargazer_count forks --correlation pearso
 #### Heatmap
 
 ```bash
-python -m src.main --heatmap --variables stargazer_count, forks, commit_count --correlation pearson --output ./output.png
+python -m src.main --heatmap --variables stargazer_count forks commit_count --correlation pearson --output ./output.png
 ```
 
 ---
