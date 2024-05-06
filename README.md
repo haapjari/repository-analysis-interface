@@ -13,6 +13,13 @@ This is an `Interface` for tool for [repository-analysis-orchestration](https://
 
 ---
 
+## TODO
+
+- Support for Regression
+- Support for Clustering
+
+---
+
 ## Example
 
 ### Display Help Message
@@ -40,7 +47,7 @@ python -m src.main --normalize
 python -m src.main --dist --variables latest_release created_at stargazer_count open_issues closed_issues open_pull_request_count closed_pull_request_count forks watcher_count subscriber_count commit_count network_count total_releases_count contributor_count third_party_loc self_written_loc popularity activity maturity self_written_loc_proportion third_party_loc_proportion --output ./output.png
 ```
 
-#### Create Composite Scores
+#### Create Weighted Sums
 
 ```bash
 python -m src.main --composite --variables stargazer_count forks --name popularity 
@@ -58,5 +65,15 @@ python -m src.main --plot --variables stargazer_count forks --correlation pearso
 ```bash
 python -m src.main --heatmap --variables stargazer_count forks commit_count --correlation pearson --output ./output.png
 ```
+
+#### Regression 
+
+```bash
+python -m src.main --regression --method linear --dependent stargazers --independent forks commits --output ./output.png
+```
+
+#### Clustering
+
+# TODO
 
 ---
