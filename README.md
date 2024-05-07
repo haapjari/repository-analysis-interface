@@ -15,7 +15,6 @@ This is an `Interface` for tool for [repository-analysis-orchestration](https://
 
 ## TODO
 
-- Support for Regression
 - Support for Clustering
 
 ---
