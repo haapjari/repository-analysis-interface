@@ -69,7 +69,7 @@ python -m src.main --heatmap --variables stargazer_count forks commit_count --co
 #### Regression 
 
 ```bash
-python -m src.main --regression --method linear --dependent stargazers --independent forks commits --output ./output.png
+python -m src.main --regression --method linear --dependent stargazers --independent forks commits
 ```
 
 #### Clustering

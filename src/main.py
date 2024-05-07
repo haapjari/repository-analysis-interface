@@ -18,7 +18,7 @@ def main():
                     "  python -m src.main --dist --variables stargazers --output ./output.png\n"
                     "  python -m src.main --plot --variables stargazers forks --correlation pearson --output ./output/plot.png\n"
                     "  python -m src.main --heatmap --variables stargazers forks commits --correlation pearson --output ./output/heatmap.png\n"
-                    "  python -m src.main --regression linear --dependent-variable stargazers --independent-variables forks commits --output ./output.png\n",
+                    "  python -m src.main --regression linear --dependent-variable stargazers --independent-variables forks commits",
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=False)
 
@@ -30,7 +30,7 @@ def main():
     parser.add_argument('--dist', action='store_true', help='Draw Distribution Image to the Output Path')
     parser.add_argument('--plot', action='store_true', help='Draw Plot Image to the Output Path')
     parser.add_argument('--heatmap', action='store_true', help='Draw Heatmap of Correlation Coefficients to the Output Path')
-    parser.add_argument('--regression', action='store_true', help='Execute Regression and Return Scatter Plot, with Regression Lien to Output Path')
+    parser.add_argument('--regression', action='store_true', help='Execute Regression and Prints the Relevant Values')
 
     if parser.parse_known_args()[0].regression:
         regression_group = parser.add_argument_group('Regression Options')
@@ -38,7 +38,6 @@ def main():
                                    default='linear', help='Variables for Regression') 
         regression_group.add_argument('--dependent', type=str, required=True, help='Dependent Variable') 
         regression_group.add_argument('--independent', nargs='+', required=True, help='Independent Variables')
-        regression_group.add_argument('--output', type=str, required=True, help='Output Path for the Regression Scatter Plot')
 
     if parser.parse_known_args()[0].collect:
         collect_group = parser.add_argument_group('Collect Options')
@@ -156,14 +155,12 @@ def main():
         method: str = args.method
         dependent: str = args.dependent
         independent: dict = args.independent 
-        output: str = args.output
 
-        print(method)
-        print(dependent)
-        print(independent)
-        print(output)
-
-        # python -m src.main --regression --method linear --dependent stargazers --independent forks commits --output ./output
+        try:
+            v.regression(method, dependent, independent)
+        except Exception as e:
+            log.error(e)
+            sys.exit(1)
 
     else:
         parser.print_help()
