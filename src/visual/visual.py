@@ -1,12 +1,14 @@
 import logging as log
 
-import numpy
 import requests
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import pearsonr, spearmanr, kendalltau
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
+
+from scipy.stats import pearsonr, spearmanr, kendalltau
+from sklearn.linear_model import LinearRegression
 
 from src.config.config import *
 
@@ -68,7 +70,7 @@ class Visual:
             if y_title in repo:
                 y_values.append(repo[y_title])
 
-        draw_plot(correlation, x_title, y_title, x_values, y_values, output)
+        draw_correlation_plot(correlation, x_title, y_title, x_values, y_values, output)
 
     @staticmethod
     def heatmap(variables: dict, correlation: str, output: str):
@@ -95,6 +97,62 @@ class Visual:
                         data[key] = [repo[key]]
 
         draw_heatmap(data, correlation, output)
+    
+    @staticmethod
+    def regression(method: str, dependent: str, independent: dict):
+        """
+        Execute Regression, with the Parameters
+        """
+
+        database_api_host = get("DATABASE_API_HOST")
+        s = f"{database_api_host}/api/v1/repos/normalized"
+
+        response = requests.get(s)
+        response.raise_for_status()
+
+        repos = response.json()
+
+        dep: list = [] 
+        indep: dict = {}  
+
+        for repo in repos:
+            if dependent in repo:
+                dep.append(repo[dependent])
+            for ind in independent:
+                if ind in repo:
+                    if ind in indep:
+                        indep[ind].append(repo[ind])
+                    else:
+                        indep[ind] = [repo[ind]]
+
+
+        draw_regression_plot(method, dep, indep)
+
+
+def draw_regression_plot(method: str, dep: list, indep: dict):
+    x = np.column_stack(list(indep.values()))  # 2D Array
+    y = np.array(dep)  # 1D Array
+
+    if method == "linear":
+        model = LinearRegression().fit(x, y)
+        
+        r_squared = model.score(x, y)
+        intercept = model.intercept_
+        slopes = model.coef_
+
+        print("Linear Regression Summary")
+        print(f"    R^2 = {r_squared}")
+        print(f"    Intercept = {intercept}")
+        print(f"    Slopes = {slopes}")
+
+    if method == "quantile":
+        quantile = 0.5 # Median
+        try:
+            model = sm.QuantReg(y, sm.add_constant(x)).fit(q=quantile)
+            print(model.summary())
+        except Exception as e:
+            print("An error occurred during model fitting:")
+            print(str(e))
 
 
 def draw_dist(data, output):
@@ -105,7 +163,7 @@ def draw_dist(data, output):
         data (dict): Dictionary with keys as the variable names and values as lists of values to plot.
         output (str): Path including the filename to save the output plot file.
     """
-    sns.set(style="whitegrid", context="notebook")
+    sns.set_theme(style="whitegrid", context="notebook")
 
     plt.figure(figsize=(10, 6))
 
@@ -127,12 +185,12 @@ def draw_dist(data, output):
     plt.close()
 
 
-def draw_plot(method: str, x_title: str, y_title: str, x_input: list, y_input: list, output: str):
+def draw_correlation_plot(method: str, x_title: str, y_title: str, x_input: list, y_input: list, output: str):
     """
     Draw a scatter plot for the provided variables.
     """
-    x = numpy.ravel(x_input)
-    y = numpy.ravel(y_input)
+    x = np.ravel(x_input)
+    y = np.ravel(y_input)
 
     coefficient = None
     p = None
@@ -150,8 +208,8 @@ def draw_plot(method: str, x_title: str, y_title: str, x_input: list, y_input: l
         log.debug(f"Kendall's Correlation Coefficient: {coefficient} and Probability Value: {p}")
 
     # Calculate coefficients, and function for the line of best fit.
-    data = numpy.polyfit(x, y, 1)
-    polynomial = numpy.poly1d(data)
+    data = np.polyfit(x, y, 1)
+    polynomial = np.poly1d(data)
 
     # Plot the Values
     plt.scatter(x, y, color='black', s=0.5, alpha=1, marker="o", linewidth=0, label="Data Points", zorder=1, edgecolors=None, facecolors=None, antialiased=True, rasterized=None, norm=None, vmin=None, vmax=None, data=None)

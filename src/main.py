@@ -17,7 +17,8 @@ def main():
                     "  python -m src.main --composite --variables stargazers forks --name 'popularity'\n"
                     "  python -m src.main --dist --variables stargazers --output ./output.png\n"
                     "  python -m src.main --plot --variables stargazers forks --correlation pearson --output ./output/plot.png\n"
-                    "  python -m src.main --heatmap --variables stargazers forks commits --correlation pearson --output ./output/heatmap.png\n",
+                    "  python -m src.main --heatmap --variables stargazers forks commits --correlation pearson --output ./output/heatmap.png\n"
+                    "  python -m src.main --regression linear --dependent-variable stargazers --independent-variables forks commits",
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=False)
 
@@ -28,7 +29,15 @@ def main():
     parser.add_argument('--composite', action='store_true', help='Calculate Composite Variables')
     parser.add_argument('--dist', action='store_true', help='Draw Distribution Image to the Output Path')
     parser.add_argument('--plot', action='store_true', help='Draw Plot Image to the Output Path')
-    parser.add_argument('--heatmap', action='store_true', help='Draw Heatmap to the Output Path')
+    parser.add_argument('--heatmap', action='store_true', help='Draw Heatmap of Correlation Coefficients to the Output Path')
+    parser.add_argument('--regression', action='store_true', help='Execute Regression and Prints the Relevant Values')
+
+    if parser.parse_known_args()[0].regression:
+        regression_group = parser.add_argument_group('Regression Options')
+        regression_group.add_argument('--method', type=str, required=True, choices=['linear', 'quantile'], 
+                                   default='linear', help='Variables for Regression') 
+        regression_group.add_argument('--dependent', type=str, required=True, help='Dependent Variable') 
+        regression_group.add_argument('--independent', nargs='+', required=True, help='Independent Variables')
 
     if parser.parse_known_args()[0].collect:
         collect_group = parser.add_argument_group('Collect Options')
@@ -99,13 +108,13 @@ def main():
             sys.exit(1)
 
     elif args.composite:
-        variables: list = args.variables
+        vars: list = args.variables
         name: str = args.name
         c = Config()
         d = Dataset(c)
 
         try:
-            d.composite(variables, name)
+            d.composite(vars, name)
         except Exception as e:
             log.error(e)
             sys.exit(1)
@@ -134,6 +143,21 @@ def main():
 
         try:
             v.heatmap(variables, correlation, output)
+        except Exception as e:
+            log.error(e)
+            sys.exit(1)
+
+    elif args.regression:
+        # TODO
+        c = Config()
+        v: Visual = Visual(c)
+
+        method: str = args.method
+        dependent: str = args.dependent
+        independent: dict = args.independent 
+
+        try:
+            v.regression(method, dependent, independent)
         except Exception as e:
             log.error(e)
             sys.exit(1)
