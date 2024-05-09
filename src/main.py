@@ -5,7 +5,6 @@ from src.dataset.dataset import *
 from src.visual.visual import *
 from src.config.config import *
 from src.script.script import *
-from src.utils.utils import *
 
 
 def main():
