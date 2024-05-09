@@ -15,7 +15,8 @@ This is an `Interface` for tool for [repository-analysis-orchestration](https://
 
 ## TODO
 
-- Support for Clustering
+- Support for Dropping Columns
+- Clustering
 
 ---
 
@@ -38,6 +39,11 @@ python -m src.main --collect 2008-01-01 2009-03-01 Go 100 10000 desc
 ```bash
 python -m src.main --normalize
 ```
+
+### Cleaning the Dataset
+
+TODO
+
 ### Analyze the Dataset
 
 #### Distributions

@@ -147,8 +147,8 @@ class Dataset:
         numeric_fields = [
             "stargazer_count", "open_issues", "closed_issues",
             "open_pull_request_count", "closed_pull_request_count",
-            "forks", "watcher_count", "subscriber_count", "commit_count",
-            "network_count", "total_releases_count", "contributor_count",
+            "forks", "watcher_count", "commit_count", "subscriber_count",
+            "total_releases_count", "contributor_count", "network_count",
             "third_party_loc", "self_written_loc"
         ]
 
@@ -162,12 +162,11 @@ class Dataset:
         # 5. Normalizes these numeric fields and updates the repository copy with these values.
         # 6. Stores each updated repository in the 'normalized_repos' dictionary using the repository's name as the key.
         for r in repos:
-            repo_name = r['name']
+            repo_name = r['full_name']
             normalized_repo = r.copy()
 
             dates = {"created_at": r["created_at"], "latest_release": r["latest_release"]}
             normalized_dates = normalize_dates(dates)
-
             normalized_repo.update(normalized_dates)
 
             numeric_values = {field: r[field] for field in numeric_fields if field in r}

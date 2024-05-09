@@ -148,7 +148,6 @@ def main():
             sys.exit(1)
 
     elif args.regression:
-        # TODO
         c = Config()
         v: Visual = Visual(c)
 
