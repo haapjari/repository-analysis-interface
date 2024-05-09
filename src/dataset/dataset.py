@@ -1,12 +1,11 @@
 import json
-
-import pandas as pd
 import requests
+import pandas as pd
+import numpy as np
 
 from datetime import datetime, timedelta
 from src.config.config import get
-from src.utils.utils import normalize_numeric, normalize_dates
-
+from sklearn.preprocessing import MinMaxScaler
 
 class Dataset:
     def __init__(self, config, first_date=None, last_date=None, language=None, min_stars=None, max_stars=None,
@@ -143,53 +142,60 @@ class Dataset:
 
         repos = response.json()
 
-        normalized_repos = {}
+        date_fields = [ "created_at", "latest_release" ]
+
+        for r in repos:
+            for field in date_fields:
+                if field in r:
+                    try:
+                        r[field] = pd.to_datetime(r[field]).timestamp()
+                    except (ValueError, TypeError, pd.errors.OutOfBoundsDatetime):
+                        r[field] = pd.to_datetime("1970-01-01").timestamp()
+
+
         numeric_fields = [
             "stargazer_count", "open_issues", "closed_issues",
             "open_pull_request_count", "closed_pull_request_count",
             "forks", "watcher_count", "commit_count", "subscriber_count",
             "total_releases_count", "contributor_count", "network_count",
-            "third_party_loc", "self_written_loc"
+            "third_party_loc", "self_written_loc", "created_at", "latest_release",
+            "self_written_loc_proportion", "third_party_loc_proportion"
         ]
 
-        # This loop processes each repository in the 'repos' list by normalizing dates and numeric data.
-        # For each repository, it performs the following steps:
-        #
-        # 1. Creates a copy of the repository data.
-        # 2. Extracts and normalizes the date fields ('created_at' and 'latest_release').
-        # 3. Updates the repository copy with the normalized date values.
-        # 4. Collects numeric fields to be normalized, if they exist in the repository.
-        # 5. Normalizes these numeric fields and updates the repository copy with these values.
-        # 6. Stores each updated repository in the 'normalized_repos' dictionary using the repository's name as the key.
+        raw = {field: [] for field in numeric_fields}
+
         for r in repos:
-            repo_name = r['full_name']
-            normalized_repo = r.copy()
+            for field in numeric_fields:
+                if field in r:
+                    raw[field].append(r[field])
 
-            dates = {"created_at": r["created_at"], "latest_release": r["latest_release"]}
-            normalized_dates = normalize_dates(dates)
-            normalized_repo.update(normalized_dates)
+        normalized = {field: [] for field in numeric_fields}
 
-            numeric_values = {field: r[field] for field in numeric_fields if field in r}
-            if numeric_values:
-                normalized_numerics = normalize_numeric(numeric_values)
-                normalized_repo.update(normalized_numerics)
+        for field, data  in raw.items():
+            scaler = MinMaxScaler()
+            np_data = np.array(data).reshape(-1 ,1)
+            normalized_data = scaler.fit_transform(np_data)
+            normalized[field] = normalized_data
 
-            normalized_repos[repo_name] = normalized_repo
+        normalized_repos = []
 
-        # This loop sends the normalized repository data to the database API.
-        # For each repository in the 'normalized_repos' dictionary, it performs the following steps:
-        # 1. Constructs the URL for the normalized repository data.
-        # 2. Converts the repository data to JSON format.
-        # 3. Sends a POST request to the database API with the JSON data.
-        for repo_name, repo_data in normalized_repos.items():
+        for i in range(len(repos)):
+            new_repo = {}
+            for field in numeric_fields:
+                if field in normalized and i < len(normalized[field]):
+                    new_repo[field] = normalized[field][i][0]  
+            new_repo['full_name'] = repos[i]['full_name']
+            normalized_repos.append(new_repo)
+
+        
+        for r in normalized_repos:
             s = f"{database_api_host}/api/v1/repos/normalized"
             headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
-            data_json = json.dumps(repo_data)
-
+            data_json = json.dumps(r)
             response = requests.post(s, headers=headers, data=data_json)
-
             response.raise_for_status()
+
 
     @staticmethod
     def composite(variables: list, name: str):
