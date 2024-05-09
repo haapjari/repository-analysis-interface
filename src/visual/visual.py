@@ -178,7 +178,7 @@ def draw_dist(data, output):
     plt.xlabel("Value", fontsize=10)
     plt.ylabel("Frequency", fontsize=10)
     plt.title("Distributions of Dataset Variables", fontsize=12)
-    plt.xlim(0.0, 0.1)
+    plt.xlim(-0.1, 1.0)
     plt.legend()
 
     plt.savefig(output, bbox_inches='tight')

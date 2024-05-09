@@ -16,6 +16,8 @@ This is an `Interface` for tool for [repository-analysis-orchestration](https://
 ## TODO
 
 - Fix Distribution, Hard to See
+    - Left Skewed.
+    - Add Rounded Corners.
 - Clustering
 
 ---
