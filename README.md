@@ -15,7 +15,6 @@ This is an `Interface` for tool for [repository-analysis-orchestration](https://
 
 ## TODO
 
-- Support for Dropping Columns
 - Clustering
 
 ---
@@ -42,7 +41,11 @@ python -m src.main --normalize
 
 ### Cleaning the Dataset
 
-TODO
+#### Drop a Column
+
+```bash
+python -m src.main --drop --table repos --column network_count
+```
 
 ### Analyze the Dataset
 

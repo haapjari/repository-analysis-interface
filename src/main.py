@@ -4,6 +4,7 @@ import sys
 from src.dataset.dataset import *
 from src.visual.visual import *
 from src.config.config import *
+from src.script.script import *
 from src.utils.utils import *
 
 
@@ -14,6 +15,7 @@ def main():
         description="examples:\n"
                     "  python -m src.main --collect 2008-01-01 2008-06-01 Go 100 10000 desc\n"
                     "  python -m src.main --normalize\n"
+                    "  python -m src.main --drop --table table --column column"
                     "  python -m src.main --composite --variables stargazers forks --name 'popularity'\n"
                     "  python -m src.main --dist --variables stargazers --output ./output.png\n"
                     "  python -m src.main --plot --variables stargazers forks --correlation pearson --output ./output/plot.png\n"
@@ -31,6 +33,13 @@ def main():
     parser.add_argument('--plot', action='store_true', help='Draw Plot Image to the Output Path')
     parser.add_argument('--heatmap', action='store_true', help='Draw Heatmap of Correlation Coefficients to the Output Path')
     parser.add_argument('--regression', action='store_true', help='Execute Regression and Prints the Relevant Values')
+    parser.add_argument('--drop', action='store_true', help="Drop a Column from a Database Table")
+
+    if parser.parse_known_args()[0].drop:
+        drop_group = parser.add_argument_group('Drop Options')
+        drop_group.add_argument('--table', type=str, required=True, help='Table to Drop Column From') 
+        drop_group.add_argument('--column', type=str, required=True, help='Column to Drop Column From') 
+
 
     if parser.parse_known_args()[0].regression:
         regression_group = parser.add_argument_group('Regression Options')
@@ -157,6 +166,20 @@ def main():
 
         try:
             v.regression(method, dependent, independent)
+        except Exception as e:
+            log.error(e)
+            sys.exit(1)
+
+    elif args.drop:
+        c = Config()
+        
+        table: str = args.table
+        column: str = args.column
+        
+        s = Script(c, table, column)
+
+        try:
+            s.drop()
         except Exception as e:
             log.error(e)
             sys.exit(1)
