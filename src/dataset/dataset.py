@@ -198,7 +198,7 @@ class Dataset:
 
 
     @staticmethod
-    def composite(variables: list, name: str):
+    def weighted(variables: list, name: str):
         """
         Create required composite variables on-demand, and update them in the Database Entries.
         """
