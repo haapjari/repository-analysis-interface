@@ -169,7 +169,7 @@ def draw_dist(data, output):
 
     # Iterate over each data series to plot
     for name, values in data.items():
-        sns.kdeplot(values, bw_adjust=0.5, label=name)
+        sns.kdeplot(values, bw_adjust=2, label=name, clip=(min(values), max(values)))
 
     plt.grid(True, color='gray', linestyle='-', linewidth=0.5, alpha=0.75)
     plt.minorticks_on()
@@ -178,7 +178,7 @@ def draw_dist(data, output):
     plt.xlabel("Value", fontsize=10)
     plt.ylabel("Frequency", fontsize=10)
     plt.title("Distributions of Dataset Variables", fontsize=12)
-    plt.xlim(0.0, 0.1)
+    plt.xlim(0, 0.1)
     plt.legend()
 
     plt.savefig(output, bbox_inches='tight')
