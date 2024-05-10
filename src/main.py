@@ -14,25 +14,35 @@ def main():
         description="examples:\n"
                     "  python -m src.main --collect 2008-01-01 2008-06-01 Go 100 10000 desc\n"
                     "  python -m src.main --normalize\n"
-                    "  python -m src.main --drop --table table --column column"
-                    "  python -m src.main --composite --variables stargazers forks --name 'popularity'\n"
+                    "  python -m src.main --drop --table table --column column\n"
+                    "  python -m src.main --weighted --variables stargazers forks --name popularity\n"
                     "  python -m src.main --dist --variables stargazers --output ./output.png\n"
-                    "  python -m src.main --plot --variables stargazers forks --correlation pearson --output ./output/plot.png\n"
-                    "  python -m src.main --heatmap --variables stargazers forks commits --correlation pearson --output ./output/heatmap.png\n"
-                    "  python -m src.main --regression linear --dependent-variable stargazers --independent-variables forks commits",
+                    "  python -m src.main --plot --variables stargazers forks --correlation pearson --output ./plot.png\n"
+                    "  python -m src.main --heatmap --variables stargazers forks commits --correlation pearson --output ./heatmap.png\n"
+                    "  python -m src.main --regression --method linear --dependent stargazers --independent forks commits\n"
+                    "  python -m src.main --cluster --method hierarchical --variables forks commit_count --output ./dendogram.png",
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=False)
 
     parser.add_argument('--help', action='help', help='Help Message')
 
-    parser.add_argument('--collect', action='store_true', help='Start Dataset Collection')
-    parser.add_argument('--normalize', action='store_true', help='Normalize Collected Dataset')
-    parser.add_argument('--composite', action='store_true', help='Calculate Composite Variables')
-    parser.add_argument('--dist', action='store_true', help='Draw Distribution Image to the Output Path')
-    parser.add_argument('--plot', action='store_true', help='Draw Plot Image to the Output Path')
-    parser.add_argument('--heatmap', action='store_true', help='Draw Heatmap of Correlation Coefficients to the Output Path')
-    parser.add_argument('--regression', action='store_true', help='Execute Regression and Prints the Relevant Values')
+    parser.add_argument('--collect', action='store_true', help='Collect')
+    parser.add_argument('--normalize', action='store_true', help='Normalize')
+    parser.add_argument('--weighted', action='store_true', help='Weighted Sum')
+    parser.add_argument('--dist', action='store_true', help='Distributions')
+    parser.add_argument('--plot', action='store_true', help='Plots')
+    parser.add_argument('--heatmap', action='store_true', help='Heatmap')
+    parser.add_argument('--regression', action='store_true', help='Regression')
     parser.add_argument('--drop', action='store_true', help="Drop a Column from a Database Table")
+    parser.add_argument('--cluster', action='store_true', help="Clustering")
+
+    
+    if parser.parse_known_args()[0].cluster:
+        cluster_group = parser.add_argument_group('Cluster Options')
+        cluster_group.add_argument('--method', type=str, required=True, choices=['hierarchical'], 
+                              default='hierarchical', help='Clustering Method') 
+        cluster_group.add_argument('--variables', nargs='+', required=True, help='Variables')
+        cluster_group.add_argument('--output', type=str, help='Output Path')
 
     if parser.parse_known_args()[0].drop:
         drop_group = parser.add_argument_group('Drop Options')
@@ -43,7 +53,7 @@ def main():
     if parser.parse_known_args()[0].regression:
         regression_group = parser.add_argument_group('Regression Options')
         regression_group.add_argument('--method', type=str, required=True, choices=['linear', 'quantile'], 
-                                   default='linear', help='Variables for Regression') 
+                                   default='linear', help='Regression Method') 
         regression_group.add_argument('--dependent', type=str, required=True, help='Dependent Variable') 
         regression_group.add_argument('--independent', nargs='+', required=True, help='Independent Variables')
 
@@ -75,8 +85,8 @@ def main():
                                 default='pearson', help='Correlation type: spearman, kendall or pearson')
         plot_group.add_argument('--output', type=str, required=True, help='Output path for the plot')
 
-    if parser.parse_known_args()[0].composite:
-        plot_group = parser.add_argument_group('Composite Score Options')
+    if parser.parse_known_args()[0].weighted:
+        plot_group = parser.add_argument_group('Weighted Sum Options')
         plot_group.add_argument('--variables', nargs='+', required=True, help='Variables for Plot')
         plot_group.add_argument('--name', type=str, required=True, help='New Name')
 
@@ -115,14 +125,14 @@ def main():
             log.error(e)
             sys.exit(1)
 
-    elif args.composite:
+    elif args.weighted:
         vars: list = args.variables
         name: str = args.name
         c = Config()
         d = Dataset(c)
 
         try:
-            d.composite(vars, name)
+            d.weighted(vars, name)
         except Exception as e:
             log.error(e)
             sys.exit(1)
@@ -165,6 +175,20 @@ def main():
 
         try:
             v.regression(method, dependent, independent)
+        except Exception as e:
+            log.error(e)
+            sys.exit(1)
+    
+    elif args.cluster:
+        c = Config()
+        v: Visual = Visual(c)
+
+        method: str = args.method
+        variables: list = args.variables
+        output: str = args.output
+
+        try:
+            v.cluster(method, variables, output)
         except Exception as e:
             log.error(e)
             sys.exit(1)

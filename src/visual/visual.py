@@ -8,6 +8,9 @@ import numpy as np
 import statsmodels.api as sm
 
 from scipy.stats import pearsonr, spearmanr, kendalltau
+from sklearn_extra.cluster import KMedoids
+from sklearn.cluster import DBSCAN
+from scipy.cluster.hierarchy import dendrogram, linkage
 from sklearn.linear_model import LinearRegression
 
 from src.config.config import *
@@ -127,6 +130,52 @@ class Visual:
 
 
         draw_regression_plot(method, dep, indep)
+
+    @staticmethod
+    def cluster(method: str, variables: list, output: str):
+        """
+        Execute clustering based on the specified method and save the results.
+    
+        Args:
+            method (str): Clustering method, e.g., 'hierarchical'.
+            variables (list): List of variables to include in the clustering.
+            output (str): Path to save the output plot or data file.
+        """
+        database_api_host = get("DATABASE_API_HOST")
+        s = f"{database_api_host}/api/v1/repos/normalized"
+    
+        response = requests.get(s)
+        response.raise_for_status()
+    
+        repos = response.json()
+        
+        # Variables -> Observations
+        data = {var: [] for var in variables}
+        for repo in repos:
+            for var in variables:
+                if var in repo:
+                    data[var].append(repo[var])
+    
+        df = pd.DataFrame(data)
+        df_transposed = df.transpose()
+    
+        if method == "hierarchical":
+            Z = linkage(df_transposed, method='ward', metric='euclidean')
+    
+            plt.figure(figsize=(15, 10))  # Increased figure size for better clarity
+            dendrogram(
+                Z,
+                orientation='left',
+                labels=variables,
+                leaf_font_size=10,
+            )
+    
+            plt.title("Hierarchical Clustering Dendrogram of Variables")
+            plt.xlabel("Variables")
+            plt.ylabel("Distance")
+            plt.tight_layout()  # Adjust layout to fit everything nicely
+            plt.savefig(output)
+            plt.close()
 
 
 def draw_regression_plot(method: str, dep: list, indep: dict):
