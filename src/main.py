@@ -19,7 +19,7 @@ def main():
                     "  python -m src.main --dist --variables stargazers --output ./output.png\n"
                     "  python -m src.main --plot --variables stargazers forks --correlation pearson --output ./plot.png\n"
                     "  python -m src.main --heatmap --variables stargazers forks commits --correlation pearson --output ./heatmap.png\n"
-                    "  python -m src.main --regression --method linear --dependent stargazers --independent forks commits\n"
+                    "  python -m src.main --regression --method linear --dependent third_party_loc self_written_loc --independent forks commits\n"
                     "  python -m src.main --cluster --method hierarchical --variables forks commit_count --output ./dendogram.png",
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=False)
@@ -54,7 +54,7 @@ def main():
         regression_group = parser.add_argument_group('Regression Options')
         regression_group.add_argument('--method', type=str, required=True, choices=['linear', 'quantile'], 
                                    default='linear', help='Regression Method') 
-        regression_group.add_argument('--dependent', type=str, required=True, help='Dependent Variable') 
+        regression_group.add_argument('--dependent', nargs='+', required=True, help='Dependent Variables') 
         regression_group.add_argument('--independent', nargs='+', required=True, help='Independent Variables')
 
     if parser.parse_known_args()[0].collect:
@@ -170,7 +170,7 @@ def main():
         v: Visual = Visual(c)
 
         method: str = args.method
-        dependent: str = args.dependent
+        dependent: dict = args.dependent
         independent: dict = args.independent 
 
         try:

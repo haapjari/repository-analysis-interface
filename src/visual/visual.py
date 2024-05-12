@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 
+from collections import defaultdict
 from scipy.stats import pearsonr, spearmanr, kendalltau
 from sklearn_extra.cluster import KMedoids
 from sklearn.cluster import DBSCAN
@@ -100,36 +101,37 @@ class Visual:
                         data[key] = [repo[key]]
 
         draw_heatmap(data, correlation, output)
-    
+
     @staticmethod
-    def regression(method: str, dependent: str, independent: dict):
+    def regression(method: str, dependent: list, independent: list):
         """
-        Execute Regression, with the Parameters
+        Execute Regression using specified method.
+        Args:
+            method (str): The regression method to use.
+            dependent (list): List of dependent variable names.
+            independent (list): List of independent variable names.
         """
-
+    
         database_api_host = get("DATABASE_API_HOST")
-        s = f"{database_api_host}/api/v1/repos/normalized"
-
-        response = requests.get(s)
+        url = f"{database_api_host}/api/v1/repos/normalized"
+    
+        response = requests.get(url)
         response.raise_for_status()
-
+    
         repos = response.json()
-
-        dep: list = [] 
-        indep: dict = {}  
-
+    
+        depen = defaultdict(list)
+        indep = defaultdict(list)
+    
         for repo in repos:
-            if dependent in repo:
-                dep.append(repo[dependent])
+            for dep in dependent:
+                if dep in repo:
+                    depen[dep].append(repo[dep])
             for ind in independent:
                 if ind in repo:
-                    if ind in indep:
-                        indep[ind].append(repo[ind])
-                    else:
-                        indep[ind] = [repo[ind]]
+                    indep[ind].append(repo[ind])
 
-
-        draw_regression_plot(method, dep, indep)
+        draw_regression_plot(method, depen, indep)
 
     @staticmethod
     def cluster(method: str, variables: list, output: str):
@@ -178,30 +180,40 @@ class Visual:
             plt.close()
 
 
-def draw_regression_plot(method: str, dep: list, indep: dict):
-    x = np.column_stack(list(indep.values()))  # 2D Array
-    y = np.array(dep)  # 1D Array
+def draw_regression_plot(method: str, depen, indep):
+    """
+    Draw a regression plot based on the specified method and data.
+    Args:
+        method (str): 'linear' or 'quantile' to specify the regression method.
+        depen (dict): A dictionary where the values are lists of dependent variable data.
+        indep (dict): A dictionary where the values are lists of independent variables data.
+    """
+    x = np.column_stack(list(indep.values()))
 
-    if method == "linear":
-        model = LinearRegression().fit(x, y)
-        
-        r_squared = model.score(x, y)
-        intercept = model.intercept_
-        slopes = model.coef_
+    for key, values in depen.items():
+        y = np.array(values)
 
-        print("Linear Regression Summary")
-        print(f"    R^2 = {r_squared}")
-        print(f"    Intercept = {intercept}")
-        print(f"    Slopes = {slopes}")
+        if method == "linear":
+            model = LinearRegression().fit(x, y)
+            r_squared = model.score(x, y)
+            intercept = model.intercept_
+            slopes = model.coef_
 
-    if method == "quantile":
-        quantile = 0.5 # Median
-        try:
-            model = sm.QuantReg(y, sm.add_constant(x)).fit(q=quantile)
-            print(model.summary())
-        except Exception as e:
-            print("An error occurred during model fitting:")
-            print(str(e))
+            print(f"Linear Regression Summary for {key}")
+            print(f"    R^2 = {r_squared}")
+            print(f"    Intercept = {intercept}")
+            print(f"    Slopes = {slopes}")
+
+        elif method == "quantile":
+            quantile = 0.5
+            try:
+                model = sm.QuantReg(y, sm.add_constant(x)).fit(q=quantile)
+                print(f"Quantile Regression Summary for {key}")
+                print(model.summary())
+                
+            except Exception as e:
+                print(f"An error occurred during model fitting for {key}:")
+                print(str(e))
 
 
 def draw_dist(data, output):
