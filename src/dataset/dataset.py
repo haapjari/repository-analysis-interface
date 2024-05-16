@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime, timedelta
 from src.config.config import get
 from sklearn.preprocessing import MinMaxScaler
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 class Dataset:
     def __init__(self, config, first_date=None, last_date=None, language=None, min_stars=None, max_stars=None,
@@ -231,3 +232,35 @@ class Dataset:
             data = json.dumps(updated_repo)
             response = requests.put(url, headers=headers, data=data)
             response.raise_for_status()
+
+
+    @staticmethod 
+    def collinearity(variables: list):
+        """
+        Calculate and print the Variance Inflation Factor (VIF) for each variable.
+        """
+
+        database_api_host = get("DATABASE_API_HOST")
+        s = f"{database_api_host}/api/v1/repos/normalized"
+        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+
+        response = requests.get(s, headers=headers)
+        response.raise_for_status()
+
+        repos = response.json()
+        df = pd.DataFrame(repos)
+
+        # Ensure all variables are in the dataframe
+        variables = [var.strip(',') for var in variables if var in df.columns]
+
+        if not variables:
+            return
+
+        # Add a constant column for intercept
+        df['intercept'] = 1
+
+        vif_data = pd.DataFrame()
+        vif_data["feature"] = variables
+        vif_data["VIF"] = [variance_inflation_factor(df[variables + ['intercept']].values, i) for i in range(len(variables))]
+
+        print(vif_data)

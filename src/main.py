@@ -20,7 +20,8 @@ def main():
                     "  python -m src.main --plot --variables stargazers forks --correlation pearson --output ./plot.png\n"
                     "  python -m src.main --heatmap --variables stargazers forks commits --correlation pearson --output ./heatmap.png\n"
                     "  python -m src.main --regression --method linear --dependent third_party_loc self_written_loc --independent forks commits\n"
-                    "  python -m src.main --cluster --method hierarchical --variables forks commit_count --output ./dendogram.png",
+                    "  python -m src.main --cluster --method hierarchical --variables forks commit_count --output ./dendogram.png"
+                    "  python -m src.main --vif -variables forks commit_count",
         formatter_class=argparse.RawTextHelpFormatter,
         add_help=False)
 
@@ -35,8 +36,13 @@ def main():
     parser.add_argument('--regression', action='store_true', help='Regression')
     parser.add_argument('--drop', action='store_true', help="Drop a Column from a Database Table")
     parser.add_argument('--cluster', action='store_true', help="Clustering")
+    parser.add_argument('--vif', action='store_true', help="Clustering")
 
     
+    if parser.parse_known_args()[0].vif:
+        cluster_group = parser.add_argument_group('VIF Options')
+        cluster_group.add_argument('--variables', nargs='+', required=True, help='Variables')
+
     if parser.parse_known_args()[0].cluster:
         cluster_group = parser.add_argument_group('Cluster Options')
         cluster_group.add_argument('--method', type=str, required=True, choices=['hierarchical'], 
@@ -203,6 +209,19 @@ def main():
 
         try:
             s.drop()
+        except Exception as e:
+            log.error(e)
+            sys.exit(1)
+
+    elif args.vif:
+        c = Config()
+        
+        variables: list = args.variables
+        
+        d = Dataset(c)
+
+        try:
+            d.collinearity(variables)
         except Exception as e:
             log.error(e)
             sys.exit(1)

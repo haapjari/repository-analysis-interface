@@ -80,4 +80,10 @@ python -m src.main --regression --method linear --dependent stargazers --indepen
 python -m src.main --cluster --method hierarchical --variables created_at stargazer_count open_issues closed_issues open_pull_request_count closed_pull_request_count forks watcher_count commit_count total_releases_count contributor_count third_party_loc self_written_loc self_written_loc_proportion third_party_loc_proportion --output ./path.png
 ```
 
+#### Collinearity 
+
+```bash
+python -m src.main --vif --variables forks commit_count
+```
+
 ---
